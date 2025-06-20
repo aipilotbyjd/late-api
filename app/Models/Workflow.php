@@ -30,14 +30,12 @@ class Workflow extends Model
         'name',
         'description',
         'status',
-        'workflow_json',
         'trigger_type',
         'webhook_token',
         'is_public',
         'cron_expression',
         'last_run_at',
-        'version',
-        'settings',
+        'active_version_id',
     ];
 
     /**
@@ -46,13 +44,11 @@ class Workflow extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'workflow_json' => 'array',
         'is_public' => 'boolean',
         'last_run_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
-        'settings' => 'array',
     ];
 
     /**
@@ -68,14 +64,11 @@ class Workflow extends Model
             if (empty($model->webhook_token)) {
                 $model->webhook_token = Str::random(40);
             }
-            if (empty($model->version)) {
-                $model->version = '1.0.0';
-            }
         });
     }
 
     /**
-     * Get the project that owns the workflow.
+     * Get the project that the workflow belongs to.
      */
     public function project()
     {
@@ -83,19 +76,35 @@ class Workflow extends Model
     }
 
     /**
-     * Get the workflow's executions.
+     * Get all versions of the workflow.
+     */
+    public function versions()
+    {
+        return $this->hasMany(WorkflowVersion::class)->latest('id');
+    }
+
+    /**
+     * Get the latest version of the workflow.
+     */
+    public function latestVersion()
+    {
+        return $this->hasOne(WorkflowVersion::class)->latest('id');
+    }
+
+    /**
+     * Get the active version of the workflow.
+     */
+    public function activeVersion()
+    {
+        return $this->belongsTo(WorkflowVersion::class, 'active_version_id');
+    }
+
+    /**
+     * Get all executions for the workflow.
      */
     public function executions()
     {
         return $this->hasMany(WorkflowExecution::class);
-    }
-
-    /**
-     * Get the workflow's versions.
-     */
-    public function versions()
-    {
-        return $this->hasMany(WorkflowVersion::class);
     }
 
     /**

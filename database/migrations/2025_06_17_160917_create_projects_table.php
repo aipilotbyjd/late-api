@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('team_id')->constrained();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

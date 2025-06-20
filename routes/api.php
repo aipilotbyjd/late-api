@@ -18,26 +18,18 @@ Route::prefix('v1')->group(function () {
 
         // Workflow routes
         Route::apiResource('workflows', WorkflowController::class);
-        
+
         // Workflow execution
-        Route::post('workflows/{workflow}/execute', [WorkflowController::class, 'execute']);
-        
-        // Webhook management
-        Route::get('workflows/{workflow}/webhook-url', [WorkflowController::class, 'webhookUrl']);
-        Route::post('workflows/{workflow}/regenerate-token', [WorkflowController::class, 'regenerateToken']);
-        
+        Route::post('workflows/{workflow}/execute', [WorkflowController::class, 'execute'])
+            ->name('workflows.execute');
+
         // Workflow versions
-        Route::get('workflows/{workflow}/versions', [WorkflowController::class, 'versions']);
-        Route::post('workflows/{workflow}/versions/{version}/activate', [WorkflowController::class, 'activateVersion']);
-        
-        // Execution history
-        Route::get('workflows/{workflow}/executions', [WorkflowController::class, 'executions']);
-        Route::get('workflows/{workflow}/executions/{execution}', [WorkflowController::class, 'execution']);
-        
-        // Workflow actions
-        Route::post('workflows/{workflow}/duplicate', [WorkflowController::class, 'duplicate']);
-        Route::post('workflows/{workflow}/export', [WorkflowController::class, 'export']);
-        Route::post('workflows/import', [WorkflowController::class, 'import']);
+        Route::get('workflows/{workflow}/versions', [WorkflowController::class, 'listVersions'])
+            ->name('workflows.versions.index');
+        Route::post('workflows/{workflow}/versions', [WorkflowController::class, 'storeVersion'])
+            ->name('workflows.versions.store');
+        Route::put('workflows/{workflow}/versions/{version}/activate', [WorkflowController::class, 'setActiveVersion'])
+            ->name('workflows.versions.activate');
     });
 
     // Public webhook endpoint (no auth required)

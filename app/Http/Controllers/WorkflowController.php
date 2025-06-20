@@ -53,45 +53,29 @@ class WorkflowController extends Controller
             'project_id' => 'required|exists:projects,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:' . implode(',', [
-                Workflow::STATUS_ACTIVE,
-                Workflow::STATUS_PAUSED,
-                Workflow::STATUS_DRAFT,
-            ]),
             'workflow_json' => 'required|array',
-            'trigger_type' => 'nullable|in:' . implode(',', [
-                Workflow::TRIGGER_WEBHOOK,
-                Workflow::TRIGGER_POLLING,
-                Workflow::TRIGGER_SCHEDULE,
-                Workflow::TRIGGER_MANUAL,
-            ]),
-            'is_public' => 'boolean',
-            'cron_expression' => 'nullable|string|required_if:trigger_type,' . Workflow::TRIGGER_SCHEDULE,
-            'settings' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        return DB::transaction(function () use ($validator, $request) {
-            // Create the workflow
-            $workflow = Workflow::create($validator->validated());
+        $workflow = DB::transaction(function () use ($request) {
+            $workflow = Workflow::create($request->only('project_id', 'name', 'description'));
 
-            // Create the initial version
-            $workflow->versions()->create([
-                'version' => '1.0.0',
+            $version = $workflow->versions()->create([
                 'name' => 'Initial Version',
                 'description' => 'Initial version of the workflow',
                 'workflow_json' => $request->workflow_json,
                 'is_active' => true,
             ]);
 
-            return response()->json($workflow->load(['project.team', 'versions']), 201);
+            $workflow->update(['active_version_id' => $version->id]);
+
+            return $workflow;
         });
+
+        return response()->json($workflow->load('activeVersion'), 201);
     }
 
     /**
@@ -125,63 +109,67 @@ class WorkflowController extends Controller
                 Workflow::STATUS_PAUSED,
                 Workflow::STATUS_DRAFT,
             ]),
-            'workflow_json' => 'sometimes|required|array',
             'trigger_type' => 'nullable|in:' . implode(',', [
                 Workflow::TRIGGER_WEBHOOK,
                 Workflow::TRIGGER_POLLING,
                 Workflow::TRIGGER_SCHEDULE,
                 Workflow::TRIGGER_MANUAL,
             ]),
-            'is_public' => 'boolean',
+            'is_public' => 'sometimes|boolean',
             'cron_expression' => 'nullable|string|required_if:trigger_type,' . Workflow::TRIGGER_SCHEDULE,
-            'settings' => 'nullable|array',
-            'version_notes' => 'nullable|string|required_with:workflow_json',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        return DB::transaction(function () use ($workflow, $validator, $request) {
-            $data = $validator->validated();
-            $workflow->update(collect($data)->except('workflow_json', 'version_notes')->toArray());
+        $workflow->update($validator->validated());
 
-            // Create a new version if workflow_json was updated
-            if ($request->has('workflow_json')) {
-                $latestVersion = $workflow->versions()->latest('id')->first();
-                $newVersion = $this->incrementVersion($latestVersion->version);
-
-                $workflow->versions()->create([
-                    'version' => $newVersion,
-                    'name' => 'v' . $newVersion,
-                    'description' => $request->input('version_notes', 'Workflow updated'),
-                    'workflow_json' => $request->workflow_json,
-                    'is_active' => true,
-                ]);
-
-                // Update workflow with new version
-                $workflow->update([
-                    'version' => $newVersion,
-                    'workflow_json' => $request->workflow_json,
-                ]);
-            }
+        return response()->json($workflow->load('activeVersion'));
+    }
 
 
-            return response()->json($workflow->load(['project.team', 'versions']));
-        });
+
+    /**
+     * List all versions of a workflow.
+     */
+    public function listVersions(Workflow $workflow): JsonResponse
+    {
+        return response()->json($workflow->versions()->paginate());
     }
 
     /**
-     * Increment the version number.
+     * Create a new version for a workflow.
      */
-    protected function incrementVersion(string $version): string
+    public function storeVersion(Request $request, Workflow $workflow): JsonResponse
     {
-        $parts = explode('.', $version);
-        $parts[count($parts) - 1]++;
-        return implode('.', $parts);
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'workflow_json' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $version = $workflow->versions()->create($validator->validated());
+
+        return response()->json($version, 201);
+    }
+
+    /**
+     * Set the active version for a workflow.
+     */
+    public function setActiveVersion(Workflow $workflow, WorkflowVersion $version): JsonResponse
+    {
+        DB::transaction(function () use ($workflow, $version) {
+            $workflow->versions()->where('id', '!=', $version->id)->update(['is_active' => false]);
+            $version->update(['is_active' => true]);
+            $workflow->update(['active_version_id' => $version->id]);
+        });
+
+        return response()->json($workflow->load('activeVersion'));
     }
 
     /**
