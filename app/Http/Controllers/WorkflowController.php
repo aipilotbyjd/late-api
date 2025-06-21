@@ -54,6 +54,12 @@ class WorkflowController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'workflow_json' => 'required|array',
+            'status' => 'required|in:' . implode(',', [
+                Workflow::STATUS_ACTIVE,
+                Workflow::STATUS_PAUSED,
+                Workflow::STATUS_DRAFT,
+                Workflow::STATUS_ERROR,
+            ]),
         ]);
 
         if ($validator->fails()) {
@@ -67,7 +73,7 @@ class WorkflowController extends Controller
                 'name' => 'Initial Version',
                 'description' => 'Initial version of the workflow',
                 'workflow_json' => $request->workflow_json,
-                'is_active' => true,
+                'status' => $request->status,
             ]);
 
             $workflow->update(['active_version_id' => $version->id]);
@@ -108,6 +114,7 @@ class WorkflowController extends Controller
                 Workflow::STATUS_ACTIVE,
                 Workflow::STATUS_PAUSED,
                 Workflow::STATUS_DRAFT,
+                Workflow::STATUS_ERROR,
             ]),
             'trigger_type' => 'nullable|in:' . implode(',', [
                 Workflow::TRIGGER_WEBHOOK,
