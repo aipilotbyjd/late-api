@@ -25,6 +25,9 @@ class WorkflowController extends Controller
      * @param string|null $expression
      * @return bool
      */
+    /**
+     * Check if a cron expression is valid.
+     */
     protected function isValidCronExpression($expression): bool
     {
         if (empty($expression)) {
@@ -37,6 +40,37 @@ class WorkflowController extends Controller
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Get the next version number based on the current version.
+     * Follows semantic versioning with support for pre-release versions.
+     */
+    protected function getNextVersion(string $currentVersion = null): string
+    {
+        if (!$currentVersion) {
+            return '1.0.0';
+        }
+
+        // Try to parse semantic version
+        if (preg_match('/^(\d+)\.(\d+)\.(\d+)(?:-([\w-]+(?:\.[\w-]+)*))?(?:\+([\w-]+(?:\.[\w-]+)*))?$/', $currentVersion, $matches)) {
+            $major = (int)$matches[1];
+            $minor = (int)$matches[2];
+            $patch = (int)$matches[3];
+            $preRelease = $matches[4] ?? null;
+
+            // Handle pre-release versions (e.g., 1.0.0-alpha.1)
+            if (str_starts_with($preRelease ?? '', 'draft.')) {
+                $draftNumber = (int)substr($preRelease, 6) + 1;
+                return "{$major}.{$minor}.{$patch}-draft.{$draftNumber}";
+            }
+
+            // Bump patch version by default
+            return "{$major}.{$minor}." . ($patch + 1);
+        }
+
+        // Fallback: append .1 if not a semantic version
+        return $currentVersion . '.1';
     }
 
     /**
@@ -93,10 +127,11 @@ class WorkflowController extends Controller
             $workflow = Workflow::create($request->only('project_id', 'name', 'description', 'workflow_json', 'status'));
 
             $version = $workflow->versions()->create([
+                'version' => '1.0.0',
                 'name' => 'Initial Version',
                 'description' => 'Initial version of the workflow',
                 'workflow_json' => $request->workflow_json,
-                'status' => $request->status,
+                'is_active' => true,
             ]);
 
             $workflow->update(['active_version_id' => $version->id]);
@@ -202,21 +237,44 @@ class WorkflowController extends Controller
             if ($request->has('workflow_json')) {
                 $latestVersion = $workflow->versions()->latest()->first();
 
-                // Parse and increment version manually
+                // Parse and increment version similar to n8n
                 if ($latestVersion) {
-                    $currentVersion = $latestVersion->version; // e.g., "1.0.5"
-                    [$major, $minor, $patch] = explode('.', $currentVersion);
-                    $newVersion = $major . '.' . $minor . '.' . ((int)$patch + 1);
+                    $currentVersion = $latestVersion->version;
+                    // Try to parse semantic version (e.g., 1.2.3)
+                    if (preg_match('/^(\d+)\.(\d+)\.(\d+)(?:-([\w-]+(?:\.[\w-]+)*))?(?:\+([\w-]+(?:\.[\w-]+)*))?$/', $currentVersion, $matches)) {
+                        $major = (int)$matches[1];
+                        $minor = (int)$matches[2];
+                        $patch = (int)$matches[3];
+                        $preRelease = $matches[4] ?? null;
+                        $build = $matches[5] ?? null;
+
+                        // If this is a draft version (e.g., 1.2.3-draft.1), increment the draft number
+                        if (str_starts_with($preRelease ?? '', 'draft.')) {
+                            $draftNumber = (int)substr($preRelease, 6) + 1;
+                            $newVersion = "{$major}.{$minor}.{$patch}-draft.{$draftNumber}";
+                        } else {
+                            // Otherwise, increment the patch version
+                            $newVersion = "{$major}.{$minor}." . ($patch + 1);
+                        }
+                    } else {
+                        // Fallback for non-semver versions
+                        $newVersion = $currentVersion . '.1';
+                    }
                 } else {
+                    // First version
                     $newVersion = '1.0.0';
                 }
-                // Create new version
+                // Create new version with proper metadata
                 $version = $workflow->versions()->create([
                     'version' => $newVersion,
                     'name' => 'v' . $newVersion,
                     'description' => $request->version_notes ?? 'Workflow updated',
                     'workflow_json' => $request->workflow_json,
                     'is_active' => true,
+                    'created_by' => auth()->user() ? auth()->user()->id : null,
+                    'updated_by' => auth()->user() ? auth()->user()->id : null,
+                    'nodes' => count($request->workflow_json['nodes'] ?? []),
+                    'connections' => count($request->workflow_json['edges'] ?? []),
                 ]);
 
                 // Deactivate old versions and set the new one as active
