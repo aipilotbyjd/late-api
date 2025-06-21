@@ -16,13 +16,15 @@ return new class extends Migration {
             $table->string('name');
             $table->text('description')->nullable();
             $table->enum('status', ['active', 'paused', 'draft']);
-            $table->json('workflow_json');
             $table->enum('trigger_type', ['webhook', 'polling', 'schedule'])->nullable();
             $table->string('webhook_token', 64)->unique()->nullable();
             $table->boolean('is_public')->default(false);
             $table->string('cron_expression')->nullable();
             $table->timestamp('last_run_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->foreignId('active_version_id')->nullable()->constrained('workflow_versions')->nullOnDelete();
         });
     }
 
