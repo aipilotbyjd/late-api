@@ -15,8 +15,8 @@ return new class extends Migration {
             $table->foreignId('project_id')->constrained();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->enum('status', ['active', 'paused', 'draft']);
-            $table->enum('trigger_type', ['webhook', 'polling', 'schedule'])->nullable();
+            $table->enum('status', ['active', 'paused', 'draft', 'error']);
+            $table->enum('trigger_type', ['webhook', 'polling', 'schedule', 'manual'])->nullable();
             $table->string('webhook_token', 64)->unique()->nullable();
             $table->boolean('is_public')->default(false);
             $table->string('cron_expression')->nullable();
