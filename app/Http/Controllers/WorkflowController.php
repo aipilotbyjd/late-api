@@ -33,9 +33,9 @@ class WorkflowController extends Controller
         // Search by name or description
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -263,7 +263,7 @@ class WorkflowController extends Controller
             'execution_id' => $execution->id,
         ]);
     }
-    
+
     /**
      * Dispatch a workflow execution job.
      */
@@ -385,7 +385,7 @@ class WorkflowController extends Controller
     public function export(Workflow $workflow): JsonResponse
     {
         $workflow->load('versions');
-        
+
         return response()->json([
             'workflow' => $workflow->toArray(),
             'exported_at' => now()->toDateTimeString(),
@@ -413,7 +413,7 @@ class WorkflowController extends Controller
 
         return DB::transaction(function () use ($request) {
             $workflowData = $request->workflow;
-            
+
             // Create the workflow
             $workflow = Workflow::create([
                 'project_id' => $workflowData['project_id'],

@@ -58,7 +58,7 @@ class ExecuteNodeJob implements ShouldQueue
 
             // Find the current node in the workflow
             $node = collect($workflowData['nodes'] ?? [])->firstWhere('id', $this->nodeId);
-            
+
             if (!$node) {
                 throw new \RuntimeException("Node {$this->nodeId} not found in workflow");
             }
@@ -78,16 +78,16 @@ class ExecuteNodeJob implements ShouldQueue
             try {
                 // Get the appropriate handler for this node type
                 $handler = $handlerFactory->getHandler($node['type']);
-                
+
                 // Prepare context for the node
                 $context = array_merge(
                     ['execution_id' => $execution->id],
                     $this->previousResults
                 );
-                
+
                 // Execute the node
                 $result = $handler->handle($node, $context);
-                
+
                 // Update the log with success
                 $log->update([
                     'status' => 'completed',
@@ -120,7 +120,6 @@ class ExecuteNodeJob implements ShouldQueue
                         'output' => $result,
                     ]);
                 }
-
             } catch (\Exception $e) {
                 // Log the error
                 $log->update([
@@ -143,7 +142,6 @@ class ExecuteNodeJob implements ShouldQueue
 
                 throw $e; // Re-throw to trigger job retry if needed
             }
-
         } catch (\Exception $e) {
             Log::error('Error in ExecuteNodeJob: ' . $e->getMessage(), [
                 'workflow_id' => $this->workflow->id,
@@ -151,7 +149,7 @@ class ExecuteNodeJob implements ShouldQueue
                 'node_id' => $this->nodeId,
                 'exception' => $e,
             ]);
-            
+
             // If we have an execution but it's not updated yet
             if (isset($execution)) {
                 $execution->update([
@@ -160,7 +158,7 @@ class ExecuteNodeJob implements ShouldQueue
                     'finished_at' => now(),
                 ]);
             }
-            
+
             throw $e;
         }
     }
