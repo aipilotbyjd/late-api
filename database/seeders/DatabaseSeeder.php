@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,11 +15,11 @@ class DatabaseSeeder extends Seeder
     {
         // Create a test user if none exists
         $user = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'jaydeepdhrangiya@gmail.com'],
             [
-                'first_name' => 'Admin',
-                'last_name' => 'User',
-                'password' => bcrypt('password'),
+                'first_name' => 'Jaydeep',
+                'last_name' => 'Dhrangiya',
+                'password' => Hash::make('Jaydeep@123'),
                 'email_verified_at' => now(),
             ]
         );
