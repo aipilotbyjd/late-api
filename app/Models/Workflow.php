@@ -19,6 +19,8 @@ class Workflow extends Model
     const TRIGGER_POLLING = 'polling';
     const TRIGGER_SCHEDULE = 'schedule';
     const TRIGGER_MANUAL = 'manual';
+    const TRIGGER_SLACK = 'slack';
+    const TRIGGER_GMAIL = 'gmail';
 
     /**
      * The attributes that are mass assignable.

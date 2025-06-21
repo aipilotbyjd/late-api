@@ -2,18 +2,37 @@
 
 namespace App\Providers;
 
+use App\Services\WorkflowEngine\Nodes\Gmail\SendEmailHandler;
+use App\Services\WorkflowEngine\Nodes\Slack\SendMessageHandler;
 use App\Services\WorkflowEngine\WorkflowNodeHandlerFactory;
 use Illuminate\Support\ServiceProvider;
 
 class WorkflowServiceProvider extends ServiceProvider
 {
     /**
+     * The node handlers to register.
+     *
+     * @var array
+     */
+    protected $nodeHandlers = [
+        SendMessageHandler::class,
+        SendEmailHandler::class,
+    ];
+
+    /**
      * Register services.
      */
     public function register(): void
     {
         $this->app->singleton(WorkflowNodeHandlerFactory::class, function ($app) {
-            return new WorkflowNodeHandlerFactory();
+            $factory = new WorkflowNodeHandlerFactory();
+            
+            // Register all node handlers
+            foreach ($this->nodeHandlers as $handler) {
+                $factory->registerHandler($app->make($handler));
+            }
+            
+            return $factory;
         });
     }
 
@@ -22,6 +41,9 @@ class WorkflowServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Register node handlers here if needed
+        // Publish configuration files
+        $this->publishes([
+            __DIR__.'/../../config/workflow.php' => config_path('workflow.php'),
+        ], 'config');
     }
 }
