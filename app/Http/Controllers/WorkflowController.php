@@ -7,15 +7,38 @@ use App\Models\Workflow;
 use App\Models\WorkflowExecution;
 use App\Models\WorkflowVersion;
 use App\Services\WorkflowEngine\Runner;
+use Composer\Semver\Comparator;
+use Cron\CronExpression;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class WorkflowController extends Controller
 {
+    /**
+     * Check if a cron expression is valid.
+     *
+     * @param string|null $expression
+     * @return bool
+     */
+    protected function isValidCronExpression($expression): bool
+    {
+        if (empty($expression)) {
+            return false;
+        }
+
+        try {
+            CronExpression::factory($expression);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     /**
      * Display a listing of the workflows.
      */
@@ -67,7 +90,7 @@ class WorkflowController extends Controller
         }
 
         $workflow = DB::transaction(function () use ($request) {
-            $workflow = Workflow::create($request->only('project_id', 'name', 'description'));
+            $workflow = Workflow::create($request->only('project_id', 'name', 'description', 'workflow_json', 'status'));
 
             $version = $workflow->versions()->create([
                 'name' => 'Initial Version',
@@ -116,23 +139,111 @@ class WorkflowController extends Controller
                 Workflow::STATUS_DRAFT,
                 Workflow::STATUS_ERROR,
             ]),
-            'trigger_type' => 'nullable|in:' . implode(',', [
-                Workflow::TRIGGER_WEBHOOK,
-                Workflow::TRIGGER_POLLING,
-                Workflow::TRIGGER_SCHEDULE,
-                Workflow::TRIGGER_MANUAL,
-            ]),
+            'trigger_type' => [
+                'nullable',
+                'in:' . implode(',', [
+                    Workflow::TRIGGER_WEBHOOK,
+                    Workflow::TRIGGER_POLLING,
+                    Workflow::TRIGGER_SCHEDULE,
+                    Workflow::TRIGGER_MANUAL,
+                ]),
+                function ($attribute, $value, $fail) use ($workflow, $request) {
+                    if ($value === Workflow::TRIGGER_WEBHOOK && empty($workflow->webhook_token) && empty($request->webhook_token)) {
+                        // Webhook token will be generated automatically
+                        return;
+                    }
+                },
+            ],
             'is_public' => 'sometimes|boolean',
-            'cron_expression' => 'nullable|string|required_if:trigger_type,' . Workflow::TRIGGER_SCHEDULE,
+            'cron_expression' => [
+                'nullable',
+                'string',
+                Rule::requiredIf(function () use ($request) {
+                    return $request->trigger_type === Workflow::TRIGGER_SCHEDULE;
+                }),
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->trigger_type === Workflow::TRIGGER_SCHEDULE && !$this->isValidCronExpression($value)) {
+                        $fail('The cron expression is not valid.');
+                    }
+                },
+            ],
+            'workflow_json' => 'sometimes|array',
+            'version_notes' => 'nullable|string|required_with:workflow_json',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $workflow->update($validator->validated());
+        try {
+            DB::beginTransaction();
 
-        return response()->json($workflow->load('activeVersion'));
+            $updateData = $request->only(['name', 'description', 'status', 'trigger_type', 'is_public']);
+
+            // Handle cron expression for scheduled workflows
+            if ($request->has('trigger_type')) {
+                if ($request->trigger_type === Workflow::TRIGGER_SCHEDULE) {
+                    $updateData['cron_expression'] = $request->cron_expression;
+                } else {
+                    $updateData['cron_expression'] = null;
+                }
+            }
+
+            // Generate webhook token if changing to webhook trigger and no token exists
+            if (($request->trigger_type === Workflow::TRIGGER_WEBHOOK || $workflow->trigger_type === Workflow::TRIGGER_WEBHOOK) &&
+                empty($workflow->webhook_token)
+            ) {
+                $updateData['webhook_token'] = Str::random(40);
+            }
+
+            $workflow->update($updateData);
+
+            // If workflow_json is being updated, create a new version
+            if ($request->has('workflow_json')) {
+                $latestVersion = $workflow->versions()->latest()->first();
+
+                // Parse and increment version manually
+                if ($latestVersion) {
+                    $currentVersion = $latestVersion->version; // e.g., "1.0.5"
+                    [$major, $minor, $patch] = explode('.', $currentVersion);
+                    $newVersion = $major . '.' . $minor . '.' . ((int)$patch + 1);
+                } else {
+                    $newVersion = '1.0.0';
+                }
+                // Create new version
+                $version = $workflow->versions()->create([
+                    'version' => $newVersion,
+                    'name' => 'v' . $newVersion,
+                    'description' => $request->version_notes ?? 'Workflow updated',
+                    'workflow_json' => $request->workflow_json,
+                    'is_active' => true,
+                ]);
+
+                // Deactivate old versions and set the new one as active
+                $workflow->versions()
+                    ->where('id', '!=', $version->id)
+                    ->update(['is_active' => false]);
+
+                $workflow->update(['active_version_id' => $version->id]);
+            }
+
+            DB::commit();
+
+            return response()->json($workflow->fresh()->load('activeVersion'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to update workflow: ' . $e->getMessage(), [
+                'exception' => $e,
+                'workflow_id' => $workflow->id,
+                'request' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to update workflow',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 
 
