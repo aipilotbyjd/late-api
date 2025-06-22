@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\UsesUuidV4;
 
 class WorkflowExecutionLog extends Model
 {
+    use UsesUuidV4;
+    
     protected $keyType = 'string';
     public $incrementing = false;
 

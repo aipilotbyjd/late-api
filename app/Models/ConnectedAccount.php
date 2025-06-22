@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\UsesUuidV4;
 
 class ConnectedAccount extends Model
 {
+    use UsesUuidV4;
+    
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -46,11 +49,31 @@ class ConnectedAccount extends Model
     }
 
     /**
-     * Check if the access token is expired.
+     * Check if the token is expired.
      */
     public function isExpired(): bool
     {
         return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    /**
+     * Update the tokens for the connected account.
+     */
+    public function updateTokens(string $accessToken, ?string $refreshToken = null, ?string $expiresAt = null): void
+    {
+        $data = [
+            'access_token' => $accessToken,
+        ];
+
+        if ($refreshToken) {
+            $data['refresh_token'] = $refreshToken;
+        }
+
+        if ($expiresAt) {
+            $data['expires_at'] = $expiresAt;
+        }
+
+        $this->update($data);
     }
 
     /**

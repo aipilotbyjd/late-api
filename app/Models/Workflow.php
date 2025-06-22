@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Traits\UsesUuidV4;
 
 class Workflow extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, UsesUuidV4;
     
     protected $keyType = 'string';
     public $incrementing = false;
