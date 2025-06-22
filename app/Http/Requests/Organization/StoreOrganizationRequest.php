@@ -25,7 +25,6 @@ class StoreOrganizationRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'team_id' => 'required|uuid|exists:teams,id',
             'is_active' => 'boolean',
         ];
     }

@@ -25,7 +25,6 @@ class UpdateOrganizationRequest extends FormRequest
         return [
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'team_id' => 'sometimes|required|uuid|exists:teams,id',
             'is_active' => 'sometimes|boolean',
         ];
     }
