@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('workflows', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('project_id')->index();
-            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->uuid('organization_id')->index();
+            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
             $table->enum('status', ['active', 'paused', 'draft', 'error']);

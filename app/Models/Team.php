@@ -9,7 +9,7 @@ use App\Traits\UsesUuidV4;
 class Team extends Model
 {
     use SoftDeletes, UsesUuidV4;
-    
+
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -51,14 +51,6 @@ class Team extends Model
     public function organizations()
     {
         return $this->hasMany(Organization::class);
-    }
-
-    /**
-     * Get the projects for the team.
-     */
-    public function projects()
-    {
-        return $this->hasMany(Project::class);
     }
 
     /**

@@ -26,8 +26,6 @@ class DatabaseSeeder extends Seeder
 
         // Run seeders in order
         $this->call([
-            TeamSeeder::class,
-            OrganizationSeeder::class,
             // Add other seeders here
         ]);
     }

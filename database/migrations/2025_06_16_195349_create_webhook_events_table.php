@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('webhook_calls', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('workflow_id')->constrained();
+            $table->foreignUuid('workflow_id')->constrained();
             $table->json('headers');
             $table->json('payload');
             $table->smallInteger('status_code');

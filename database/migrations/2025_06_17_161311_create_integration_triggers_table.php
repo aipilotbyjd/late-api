@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('integration_triggers', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('integration_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('integration_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('event_type');
             $table->json('configuration')->nullable();

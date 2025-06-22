@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('node_runs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('workflow_run_id')->constrained()->onDelete('cascade');
-            $table->foreignId('node_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('workflow_run_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('node_id')->constrained()->onDelete('cascade');
             $table->string('status');
             $table->timestamp('started_at');
             $table->timestamp('finished_at')->nullable();

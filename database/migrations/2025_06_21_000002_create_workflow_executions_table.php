@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('workflow_executions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('workflow_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('workflow_id')->constrained()->onDelete('cascade');
             $table->string('status', 20);
             $table->timestamp('started_at');
             $table->timestamp('finished_at')->nullable();

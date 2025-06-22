@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('workflow_execution_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('workflow_execution_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('workflow_execution_id')->constrained()->onDelete('cascade');
             $table->string('node_id')->nullable();
             $table->string('node_name')->nullable();
             $table->string('node_type')->nullable();

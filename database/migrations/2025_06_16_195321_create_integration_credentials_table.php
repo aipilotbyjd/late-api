@@ -14,8 +14,8 @@ return new class extends Migration {
             $table->uuid('id')->primary();
             $table->uuid('user_id')->index();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->uuid('project_id')->index();
-            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->uuid('organization_id')->index();
+            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->uuid('integration_id')->index();
             $table->foreign('integration_id')->references('id')->on('integrations')->onDelete('cascade');
             $table->string('name');
