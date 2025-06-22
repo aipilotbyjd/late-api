@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\UsesUuidV4;
 
-class Team extends Model
+class Organization extends Model
 {
     use SoftDeletes, UsesUuidV4;
     
@@ -21,7 +21,7 @@ class Team extends Model
     protected $fillable = [
         'name',
         'description',
-        'owner_id',
+        'team_id',
         'is_active',
     ];
 
@@ -38,36 +38,18 @@ class Team extends Model
     ];
 
     /**
-     * Get the owner of the team.
+     * Get the team that owns the organization.
      */
-    public function owner()
+    public function team()
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->belongsTo(Team::class);
     }
 
     /**
-     * Get the organizations for the team.
+     * Get the workflows for the organization.
      */
-    public function organizations()
+    public function workflows()
     {
-        return $this->hasMany(Organization::class);
-    }
-
-    /**
-     * Get the projects for the team.
-     */
-    public function projects()
-    {
-        return $this->hasMany(Project::class);
-    }
-
-    /**
-     * Get the users that belong to the team.
-     */
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'team_user')
-            ->withPivot('role')
-            ->withTimestamps();
+        return $this->hasMany(Workflow::class);
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\Auth\SlackOAuthController;
 use App\Http\Controllers\Auth\GoogleOAuthController;
+use App\Http\Controllers\Api\v1\OrganizationController;
 
 Route::prefix('v1')->group(function () {
     // Authentication routes
@@ -47,6 +48,9 @@ Route::prefix('v1')->group(function () {
             ->name('workflows.versions.store');
         Route::put('workflows/{workflow}/versions/{version}/activate', [WorkflowController::class, 'setActiveVersion'])
             ->name('workflows.versions.activate');
+
+        // Organization routes
+        Route::apiResource('organizations', OrganizationController::class);
     });
 
     // Public webhook endpoint (no auth required)

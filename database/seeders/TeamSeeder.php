@@ -31,24 +31,21 @@ class TeamSeeder extends Seeder
             );
         }
 
-        // Create teams
+        // Create teams only if they don't exist
         $teams = [
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Development Team',
                 'created_by' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Marketing Team',
                 'created_by' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'id' => (string) Str::uuid(),
                 'name' => 'Operations',
                 'created_by' => $user->id,
                 'created_at' => now(),
@@ -57,10 +54,11 @@ class TeamSeeder extends Seeder
         ];
 
         foreach ($teams as $team) {
-            Team::updateOrCreate(
-                ['name' => $team['name']],
-                $team
-            );
+            $existingTeam = Team::where('name', $team['name'])->first();
+            if (!$existingTeam) {
+                $team['id'] = (string) Str::uuid();
+                Team::create($team);
+            }
         }
     }
 }

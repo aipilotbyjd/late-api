@@ -32,7 +32,7 @@ class Workflow extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'project_id',
+        'organization_id',
         'name',
         'description',
         'status',
@@ -73,11 +73,11 @@ class Workflow extends Model
     }
 
     /**
-     * Get the project that the workflow belongs to.
+     * Get the organization that the workflow belongs to.
      */
-    public function project()
+    public function organization()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Organization::class);
     }
 
     /**
