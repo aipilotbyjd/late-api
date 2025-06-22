@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class WorkflowExecution extends Model
 {
     use SoftDeletes;
+    
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     const STATUS_RUNNING = 'running';
     const STATUS_COMPLETED = 'completed';
@@ -38,11 +41,11 @@ class WorkflowExecution extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'started_at' => 'datetime',
-        'finished_at' => 'datetime',
         'input' => 'array',
         'output' => 'array',
         'trigger_data' => 'array',
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

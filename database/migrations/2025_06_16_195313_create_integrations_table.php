@@ -11,7 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('integrations', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->uuid('team_id')->index();
+            $table->foreign('team_id')->references('id')->on('teams')->onDelete('cascade');
             $table->string('name')->unique();
             $table->string('display_name');
             $table->text('description');

@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('polling_tasks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('workflow_id')->constrained();
+            $table->uuid('id')->primary();
+            $table->uuid('workflow_id')->index();
+            $table->foreign('workflow_id')->references('id')->on('workflows')->onDelete('cascade');
             $table->timestamp('last_checked_at');
             $table->timestamp('next_run_at');
             $table->integer('interval_minutes');

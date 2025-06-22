@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workflow_executions', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignId('workflow_id')->constrained()->onDelete('cascade');
             $table->string('status', 20);
             $table->timestamp('started_at');

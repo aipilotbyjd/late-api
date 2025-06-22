@@ -9,6 +9,9 @@ use Illuminate\Support\Str;
 class Workflow extends Model
 {
     use SoftDeletes;
+    
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     const STATUS_ACTIVE = 'active';
     const STATUS_PAUSED = 'paused';
@@ -33,11 +36,11 @@ class Workflow extends Model
         'description',
         'status',
         'trigger_type',
+        'trigger_config',
         'webhook_token',
-        'is_public',
-        'cron_expression',
-        'last_run_at',
+        'version',
         'active_version_id',
+        'workflow_json',
     ];
 
     /**
@@ -46,8 +49,7 @@ class Workflow extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'is_public' => 'boolean',
-        'last_run_at' => 'datetime',
+        'workflow_json' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -82,7 +84,15 @@ class Workflow extends Model
      */
     public function versions()
     {
-        return $this->hasMany(WorkflowVersion::class)->latest('id');
+        return $this->hasMany(WorkflowVersion::class);
+    }
+
+    /**
+     * Get the active version of the workflow.
+     */
+    public function activeVersion()
+    {
+        return $this->hasOne(WorkflowVersion::class, 'id', 'active_version_id');
     }
 
     /**
@@ -91,14 +101,6 @@ class Workflow extends Model
     public function latestVersion()
     {
         return $this->hasOne(WorkflowVersion::class)->latest('id');
-    }
-
-    /**
-     * Get the active version of the workflow.
-     */
-    public function activeVersion()
-    {
-        return $this->belongsTo(WorkflowVersion::class, 'active_version_id');
     }
 
     /**

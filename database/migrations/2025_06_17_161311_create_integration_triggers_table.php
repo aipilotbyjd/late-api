@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('integration_triggers', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('integration_id')->constrained();
+            $table->uuid('id')->primary();
+            $table->foreignId('integration_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('display_name');
-            $table->text('description');
-            $table->json('sample_config');
+            $table->string('event_type');
+            $table->json('configuration')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

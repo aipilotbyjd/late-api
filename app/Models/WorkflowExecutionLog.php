@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class WorkflowExecutionLog extends Model
 {
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     const LEVEL_INFO = 'info';
     const LEVEL_WARNING = 'warning';
     const LEVEL_ERROR = 'error';

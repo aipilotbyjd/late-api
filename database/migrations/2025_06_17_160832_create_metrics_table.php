@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('metrics', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('workflow_id')->constrained();
+            $table->uuid('id')->primary();
+            $table->uuid('workflow_id')->index();
+            $table->foreign('workflow_id')->references('id')->on('workflows');
             $table->enum('type', ['success', 'failure', 'timeout', 'retry']);
             $table->integer('count');
             $table->enum('interval', ['hourly', 'daily', 'monthly']);

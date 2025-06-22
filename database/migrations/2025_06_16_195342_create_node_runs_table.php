@@ -10,16 +10,16 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('workflow_run_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('workflow_run_id')->constrained();
-            $table->string('node_id');
-            $table->enum('status', ['pending', 'running', 'success', 'failed']);
-            $table->json('input_data');
-            $table->json('output_data');
-            $table->text('error_message')->nullable();
+        Schema::create('node_runs', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('workflow_run_id')->constrained()->onDelete('cascade');
+            $table->foreignId('node_id')->constrained()->onDelete('cascade');
+            $table->string('status');
             $table->timestamp('started_at');
-            $table->timestamp('ended_at');
+            $table->timestamp('finished_at')->nullable();
+            $table->text('error')->nullable();
+            $table->json('input')->nullable();
+            $table->json('output')->nullable();
             $table->timestamps();
         });
     }
@@ -29,6 +29,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('workflow_run_logs');
+        Schema::dropIfExists('node_runs');
     }
 };

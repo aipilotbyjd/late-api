@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('invitations', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('team_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('team_id')->index();
+            $table->foreign('team_id')->references('id')->on('teams')->onDelete('cascade');
+            $table->uuid('invited_by')->index();
+            $table->foreign('invited_by')->references('id')->on('users')->onDelete('cascade');
             $table->string('email');
-            $table->string('token', 40)->unique();
+            $table->string('token');
+            $table->timestamp('expires_at');
             $table->timestamps();
         });
     }

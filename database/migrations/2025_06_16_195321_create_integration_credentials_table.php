@@ -10,11 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('credentials', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained();
-            $table->foreignId('project_id')->constrained();
-            $table->foreignId('integration_id')->constrained();
+        Schema::create('integration_credentials', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('user_id')->index();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->uuid('project_id')->index();
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->uuid('integration_id')->index();
+            $table->foreign('integration_id')->references('id')->on('integrations')->onDelete('cascade');
             $table->string('name');
             $table->enum('type', ['api_key', 'oauth2', 'basic']);
             $table->json('credentials');
@@ -28,6 +31,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('credentials');
+        Schema::dropIfExists('integration_credentials');
     }
 };

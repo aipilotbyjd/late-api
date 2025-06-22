@@ -11,12 +11,13 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('workflow_runs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('workflow_id')->constrained();
-            $table->enum('status', ['running', 'success', 'failed', 'cancelled']);
+            $table->uuid('id')->primary();
+            $table->uuid('workflow_id')->index();
+            $table->foreign('workflow_id')->references('id')->on('workflows')->onDelete('cascade');
+            $table->string('status');
             $table->timestamp('started_at');
-            $table->timestamp('completed_at')->nullable();
-            $table->text('error_summary')->nullable();
+            $table->timestamp('finished_at')->nullable();
+            $table->text('error')->nullable();
             $table->timestamps();
         });
     }

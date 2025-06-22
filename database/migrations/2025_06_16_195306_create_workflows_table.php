@@ -11,8 +11,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('workflows', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('project_id')->constrained();
+            $table->uuid('id')->primary();
+            $table->uuid('project_id')->index();
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
             $table->enum('status', ['active', 'paused', 'draft', 'error']);
@@ -24,7 +25,8 @@ return new class extends Migration {
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreignId('active_version_id')->nullable()->constrained('workflow_versions')->nullOnDelete();
+            $table->uuid('active_version_id')->nullable()->index();
+            $table->foreign('active_version_id')->references('id')->on('workflow_versions')->nullOnDelete();
         });
     }
 
