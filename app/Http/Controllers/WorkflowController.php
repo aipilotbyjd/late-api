@@ -78,7 +78,7 @@ class WorkflowController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Workflow::with(['project.team', 'latestVersion'])
+        $query = Workflow::with(['organization.team', 'latestVersion'])
             ->withCount('executions')
             ->latest();
 
@@ -107,7 +107,7 @@ class WorkflowController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'project_id' => 'required|exists:projects,id',
+            'organization_id' => 'required|exists:organizations,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'workflow_json' => 'required|array',
@@ -124,8 +124,11 @@ class WorkflowController extends Controller
         }
 
         $workflow = DB::transaction(function () use ($request) {
-            $workflow = Workflow::create($request->only('project_id', 'name', 'description', 'workflow_json', 'status'));
+            // Create the workflow without workflow_json
+            $workflowData = $request->only(['organization_id', 'name', 'description', 'status']);
+            $workflow = Workflow::create($workflowData);
 
+            // Create the initial version with workflow_json
             $version = $workflow->versions()->create([
                 'version' => '1.0.0',
                 'name' => 'Initial Version',
@@ -576,7 +579,7 @@ class WorkflowController extends Controller
         $validator = Validator::make($request->all(), [
             'workflow' => 'required|array',
             'workflow.name' => 'required|string|max:255',
-            'workflow.project_id' => 'required|exists:projects,id',
+            'workflow.organization_id' => 'required|exists:organizations,id',
             'workflow.versions' => 'required|array|min:1',
         ]);
 
@@ -592,7 +595,7 @@ class WorkflowController extends Controller
 
             // Create the workflow
             $workflow = Workflow::create([
-                'project_id' => $workflowData['project_id'],
+                'organization_id' => $workflowData['organization_id'],
                 'name' => $workflowData['name'],
                 'description' => $workflowData['description'] ?? null,
                 'status' => Workflow::STATUS_DRAFT,
