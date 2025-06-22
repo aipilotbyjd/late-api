@@ -45,7 +45,6 @@ class OrganizationController extends Controller
         $team = Team::create([
             'id' => (string) Str::uuid(),
             'name' => $data['name'] . ' Team',
-            'description' => 'Team for ' . $data['name'],
             'owner_id' => $user->id,
             'is_active' => true
         ]);
