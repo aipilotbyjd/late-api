@@ -50,7 +50,7 @@ class OrganizationController extends Controller
         ]);
 
         // Attach the team to the user
-        $team->users()->attach($user->id, ['role' => 'owner']);
+        $team->users()->attach($user->id, ['id' => (string) Str::uuid(), 'role' => 'owner']);
 
         // Add the team_id to the organization data
         $data['team_id'] = $team->id;
