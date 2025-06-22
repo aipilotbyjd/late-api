@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TeamSeeder extends Seeder
 {
@@ -33,16 +34,25 @@ class TeamSeeder extends Seeder
         // Create teams
         $teams = [
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Development Team',
                 'created_by' => $user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Marketing Team',
                 'created_by' => $user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Operations',
                 'created_by' => $user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ];
 
