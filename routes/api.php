@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\WorkflowController;
 use App\Http\Controllers\Api\v1\OrganizationController;
+use App\Http\Controllers\Api\v1\CredentialController;
+use App\Http\Controllers\Api\v1\OAuthController;
 
 Route::prefix('v1')->group(function () {
     // Authentication routes
@@ -34,6 +36,16 @@ Route::prefix('v1')->group(function () {
 
         // Organization routes
         Route::apiResource('organizations', OrganizationController::class);
+
+        // Credential routes
+        Route::prefix('credentials')->middleware('auth:sanctum')->group(function () {
+            Route::get('/', [CredentialController::class, 'index']);
+            Route::post('/', [CredentialController::class, 'store']);
+            Route::delete('{id}', [CredentialController::class, 'destroy']);
+
+            Route::get('oauth2/{provider}/init', [OAuthController::class, 'init']);
+            Route::get('oauth2/{provider}/callback', [OAuthController::class, 'callback']);
+        });
     });
 
     // Public webhook endpoint (no auth required)
