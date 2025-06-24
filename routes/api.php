@@ -13,6 +13,11 @@ Route::prefix('v1')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/refresh', [AuthController::class, 'refreshToken']);
 
+    Route::prefix('credentials')->group(function () {
+        Route::get('oauth2/{provider}/init', [OAuthController::class, 'init']);
+        Route::get('oauth2/{provider}/callback', [OAuthController::class, 'callback']);
+    });
+
     // Protected routes (require authentication)
     Route::group(['middleware' => ['auth:api']], function () {
         // User routes
@@ -38,13 +43,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('organizations', OrganizationController::class);
 
         // Credential routes
-        Route::prefix('credentials')->middleware('auth:sanctum')->group(function () {
+        Route::prefix('credentials')->group(function () {
             Route::get('/', [CredentialController::class, 'index']);
             Route::post('/', [CredentialController::class, 'store']);
             Route::delete('{id}', [CredentialController::class, 'destroy']);
-
-            Route::get('oauth2/{provider}/init', [OAuthController::class, 'init']);
-            Route::get('oauth2/{provider}/callback', [OAuthController::class, 'callback']);
         });
     });
 
